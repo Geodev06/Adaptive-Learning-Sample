@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
- 
+  "scripts": {
+    "build": "if [ -d \"node_modules\" ]; then echo 'node_modules exists, skipping install'; else npm install; fi && npm run start",
+    "start": "node index.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
