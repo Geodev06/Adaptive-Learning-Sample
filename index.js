@@ -7,14 +7,20 @@ app.use(bodyParser.json());
 
 // Sample training data
 const trainingData = [
-    { input: { visual: 0.8, auditory: 0.6, kinesthetic: 0.7 }, output: { visual: 1 } },
-    { input: { visual: 0.8, auditory: 0.6, kinesthetic: 0.3 }, output: { visual: 1 } },
-    { input: { visual: 0.7, auditory: 0.8, kinesthetic: 0.6 }, output: { auditory: 1 } },
-    { input: { visual: 0.9, auditory: 0.7, kinesthetic: 0.5 }, output: { visual: 1 } },
-    { input: { visual: 0.6, auditory: 0.9, kinesthetic: 0.8 }, output: { auditory: 1 } },
-    { input: { visual: 1, auditory: 0.9, kinesthetic: 0.18 }, output: { auditory: 1 } },
-    { input: { visual: 0.85, auditory: 0.9, kinesthetic: 0.88 }, output: { kinesthetic: 1 } },
-    { input: { visual: 0.11, auditory: 0.67, kinesthetic: 0.88 }, output: { kinesthetic: 1 } }
+    { input: { visual: 88, auditory: 0.6, kinesthetic: 0.7, reading_and_writing :0.2 }, output: { visual: 1 } },
+    { input: { visual: 0.8, auditory: 0.6, kinesthetic: 0.3, reading_and_writing :0.2 }, output: { visual: 1 } },
+    { input: { visual: 0.7, auditory: 0.8, kinesthetic: 0.6 , reading_and_writing :0.2}, output: { auditory: 1 } },
+    { input: { visual: 0.9, auditory: 0.7, kinesthetic: 0.5 , reading_and_writing :0.2}, output: { visual: 1 } },
+    { input: { visual: 0.6, auditory: 0.9, kinesthetic: 0.8, reading_and_writing :0.2 }, output: { auditory: 1 } },
+    { input: { visual: 1, auditory: 0.9, kinesthetic: 0.18 , reading_and_writing :0.2}, output: { auditory: 1 } },
+    { input: { visual: 0.85, auditory: 0.9, kinesthetic: 0.88, reading_and_writing :0.2 }, output: { kinesthetic: 1 } },
+    { input: { visual: 0.11, auditory: 0.67, kinesthetic: 0.88 , reading_and_writing :0.2}, output: { kinesthetic: 1 } },
+    
+    { input: { visual: 0.3, auditory: 0.4, kinesthetic: 0.4 , reading_and_writing :0.7}, output: { reading_and_writing: 1 } },
+    { input: { visual: 0.2, auditory: 0.2, kinesthetic: 0.5 , reading_and_writing :0.8}, output: { reading_and_writing: 1 } },
+    { input: { visual: 0.4, auditory: 0.2, kinesthetic: 0.3 , reading_and_writing :0.9}, output: { reading_and_writing: 1 } },
+
+
 ];
 
 // Train a Neural Network (Alternative to Random Forest)
@@ -24,7 +30,7 @@ net.train(trainingData, { log: true });
 
 // Multi-Armed Bandit (Epsilon-Greedy)
 class MultiArmedBandit {
-    constructor(modalities, epsilon = 0.7) {
+    constructor(modalities, epsilon = 0.3) {
         this.epsilon = epsilon;
         this.rewards = {};
         this.counts = {};
@@ -60,17 +66,18 @@ class MultiArmedBandit {
 }
 
 // Initialize Bandit
-const bandit = new MultiArmedBandit(["visual", "auditory", "kinesthetic"]);
+const bandit = new MultiArmedBandit(["visual", "auditory", "kinesthetic", "reading_and_writing"]);
 
 // API Endpoint
 app.post("/recommend", (req, res) => {
-    const { visual_score, auditory_score, kinesthetic_score } = req.body;
+    const { visual_score, auditory_score, kinesthetic_score, reading_and_writing_score} = req.body;
 
     console.log(net)
     if (
         visual_score === undefined ||
         auditory_score === undefined ||
-        kinesthetic_score === undefined
+        kinesthetic_score === undefined ||
+        reading_and_writing_score === undefined
     ) {
         return res.status(400).json({ error: "Missing required fields" });
     }
@@ -81,6 +88,7 @@ app.post("/recommend", (req, res) => {
         visual: visual_score / maxScore,
         auditory: auditory_score / maxScore,
         kinesthetic: kinesthetic_score / maxScore,
+        reading_and_writing : reading_and_writing_score/ maxScore
     };
 
     // Predict the best learning modality
@@ -94,6 +102,7 @@ app.post("/recommend", (req, res) => {
     const actualPerformance = selectedModality === predictedModality ? 1 : 0;
     bandit.updateRewards(selectedModality, actualPerformance);
 
+    console.log(bandit)
     res.json({
         predicted_modality: predictedModality,
         bandit_selected_modality: selectedModality,
